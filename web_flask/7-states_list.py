@@ -1,31 +1,29 @@
 #!/usr/bin/python3
-"""Start web application with two routings
-"""
+"""A simple Flask server using our real HBNB data"""
 
-from models import storage
-from models.state import State
+
 from flask import Flask, render_template
-app = Flask(__name__)
+import models
 
 
-@app.route('/states_list')
-def states_list():
-    """Render template with states
-    """
-    path = '7-states_list.html'
-    states = storage.all(State)
-    # sort State object alphabetically by name
-    sorted_states = sorted(states.values(), key=lambda state: state.name)
-    return render_template(path, sorted_states=sorted_states)
+site = Flask(__name__)
+site.url_map.strict_slashes = False
 
 
-@app.teardown_appcontext
-def app_teardown(arg=None):
-    """Clean-up session
-    """
-    storage.close()
+@site.teardown_appcontext
+def closeStorageAfterRequest(error):
+    """Close and reload the storage engine between requests"""
+
+    models.storage.close()
+
+
+@site.route('/states_list')
+def page_showStates():
+    """List all the stored states"""
+
+    states = models.storage.all('State').values()
+    return render_template('7-states_list.html', states=states)
 
 
 if __name__ == '__main__':
-    app.url_map.strict_slashes = False
-    app.run(host='0.0.0.0', port=5000)
+    site.run(host='0.0.0.0', port=5000)
